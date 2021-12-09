@@ -13,12 +13,8 @@ function App() {
         <Switch>
           <main className='py-3'>
             <Container>
-              <Route exact path='/'>
-                <HomeScreen />
-              </Route>
-              <Route path='/product/:id'>
-                <ProductScreen />
-              </Route>
+              <Route exact path='/' component={HomeScreen} />{" "}
+              <Route path='/product/:id' component={ProductScreen} />
             </Container>
           </main>
         </Switch>
