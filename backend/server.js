@@ -7,6 +7,8 @@ import { notFound, errorHandler } from "./middleware/errorMiddleware.js"
 
 dotenv.config()
 
+// console.log("HELLO", process.env.MONGO_URI)
+
 connectDB()
 
 const app = express()
@@ -21,7 +23,6 @@ app.use(notFound)
 
 app.use(errorHandler)
 const PORT = process.env.PORT || 5000
-
 app.listen(
   PORT,
   console.log(
