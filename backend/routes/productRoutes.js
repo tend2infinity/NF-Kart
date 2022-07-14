@@ -8,8 +8,7 @@ import {
 //@desc   Fetch all products
 //@route GET /api/products
 //@access Public
-router.route("./").get(getProducts)
-
+router.route("/").get(getProducts)
 //@desc   Fetch single products
 //@route GET /api/products/:id
 //@access Public
