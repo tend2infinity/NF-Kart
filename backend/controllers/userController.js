@@ -1,5 +1,6 @@
+import e from "express"
 import AsyncHandler from "express-async-handler"
-import User from "../models/productModel.js"
+import User from "../models/userModel.js"
 import generateToken from "../utils/generateToken.js"
 
 //@desc   Auth user & get a token
@@ -7,9 +8,7 @@ import generateToken from "../utils/generateToken.js"
 //@access Public
 const authUser = AsyncHandler(async (req, res) => {
   const { email, password } = req.body
-
   const user = await User.findOne({ email })
-
   if (user && (await user.matchPassword(password))) {
     res.json({
       _id: user._id,
@@ -29,7 +28,6 @@ const authUser = AsyncHandler(async (req, res) => {
 //@access Public
 const registerUser = AsyncHandler(async (req, res) => {
   const { name, email, password } = req.body
-
   const userExists = await User.findOne({ email })
 
   if (userExists) {
@@ -38,11 +36,10 @@ const registerUser = AsyncHandler(async (req, res) => {
   }
 
   const user = await User.create({
-    name,
-    email,
-    password,
+    name: name,
+    email: email,
+    password: password,
   })
-
   if (user) {
     res.status(201).json({
       _id: user._id,
@@ -58,7 +55,7 @@ const registerUser = AsyncHandler(async (req, res) => {
 })
 
 //@desc  Get user profile
-//@route POST /api/users/profile
+//@route GET /api/users/profile
 //@access Private
 const getUserProfile = AsyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id)
@@ -76,4 +73,29 @@ const getUserProfile = AsyncHandler(async (req, res) => {
   }
 })
 
-export { authUser, registerUser, getUserProfile }
+//@desc  Update user profile
+//@route PUT /api/users/profile
+//@access Private
+const updateUserProfile = AsyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id)
+  if (user) {
+    user.name = req.body.name || user.name
+    user.email = req.body.email || user.email
+    if (req.body.password) user.password = req.body.password || user.password
+    const updatedUser = await user.save()
+
+    res.json({
+      _id: updatedUser._id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      isAdmin: updatedUser.isAdmin,
+      token: generateToken(updatedUser._id),
+    })
+    res.json
+  } else {
+    res.status(404)
+    throw new Error("User not found")
+  }
+})
+
+export { authUser, registerUser, getUserProfile, updateUserProfile }
