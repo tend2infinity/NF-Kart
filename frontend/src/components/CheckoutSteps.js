@@ -19,9 +19,7 @@ const CheckoutSteps = ({ step1, step2, step3, step4 }) => {
           <Nav.Link disabled>Sign In</Nav.Link>
         </Nav.Item>
       )}
-
-      <h2>></h2>
-
+      <h2>{`>`}</h2>
       <Nav.Item>
         {step2 ? (
           <Nav.Link as={NavLink} to='/shipping'>
@@ -32,8 +30,7 @@ const CheckoutSteps = ({ step1, step2, step3, step4 }) => {
           <Nav.Link disabled>Shipping</Nav.Link>
         )}
       </Nav.Item>
-      <h2>></h2>
-
+      <h2>{`>`}</h2>
       <Nav.Item>
         {step3 ? (
           <Nav.Link as={NavLink} to='/payment'>
@@ -43,7 +40,7 @@ const CheckoutSteps = ({ step1, step2, step3, step4 }) => {
           <Nav.Link disabled>Payment</Nav.Link>
         )}
       </Nav.Item>
-      <h2>></h2>
+      <h2>{`>`}</h2>{" "}
       <Nav.Item>
         {step4 ? (
           <Nav.Link as={NavLink} to='/placeorder'>
