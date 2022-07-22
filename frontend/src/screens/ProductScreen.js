@@ -5,7 +5,6 @@ import { Row, Col, Image, ListGroup, Card, Button, Form } from "react-bootstrap"
 import Rating from "../components/Rating"
 import Message from "../components/Message"
 import Loader from "../components/Loader"
-// import Meta from "../components/Meta"
 import {
   listProductDetails,
   createProductReview,
@@ -31,11 +30,11 @@ const ProductScreen = ({ history, match }) => {
     loading: loadingProductReview,
     error: errorProductReview,
   } = productReviewCreate
-
   useEffect(() => {
     if (successProductReview) {
       setRating(0)
       setComment("")
+      dispatch(listProductDetails(match.params.id))
     }
     if (!product._id || product._id !== match.params.id) {
       dispatch(listProductDetails(match.params.id))
@@ -56,7 +55,6 @@ const ProductScreen = ({ history, match }) => {
       })
     )
   }
-
   return (
     <>
       <Link className='btn btn-light my-3' to='/'>
@@ -68,7 +66,6 @@ const ProductScreen = ({ history, match }) => {
         <Message variant='danger'>{error}</Message>
       ) : (
         <>
-          {/* <Meta title={product.name} /> */}
           <Row>
             <Col md={6}>
               <Image src={product.image} alt={product.name} fluid />
@@ -80,8 +77,9 @@ const ProductScreen = ({ history, match }) => {
                 </ListGroup.Item>
                 <ListGroup.Item>
                   <Rating
-                    value={product.rating}
+                    value={product.rating ? product.rating : 0}
                     text={`${product.numReviews} reviews`}
+                    color={"yellow"}
                   />
                 </ListGroup.Item>
                 <ListGroup.Item>Price: ${product.price}</ListGroup.Item>
@@ -156,7 +154,7 @@ const ProductScreen = ({ history, match }) => {
                 {product.reviews.map((review) => (
                   <ListGroup.Item key={review._id}>
                     <strong>{review.name}</strong>
-                    <Rating value={review.rating} />
+                    <Rating value={review.rating} text={""} color={"yellow"} />
                     <p>{review.createdAt.substring(0, 10)}</p>
                     <p>{review.comment}</p>
                   </ListGroup.Item>

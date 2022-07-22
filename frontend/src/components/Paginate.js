@@ -1,13 +1,13 @@
 import React from "react"
 import { Pagination } from "react-bootstrap"
-import { LinkContainer } from "react-router-bootstrap"
+import { Link } from "react-router-dom"
 
 const Paginate = ({ pages, page, isAdmin = false, keyword = "" }) => {
   return (
     pages > 1 && (
       <Pagination>
         {[...Array(pages).keys()].map((x) => (
-          <LinkContainer
+          <Link
             key={x + 1}
             to={
               !isAdmin
@@ -18,7 +18,7 @@ const Paginate = ({ pages, page, isAdmin = false, keyword = "" }) => {
             }
           >
             <Pagination.Item active={x + 1 === page}>{x + 1}</Pagination.Item>
-          </LinkContainer>
+          </Link>
         ))}
       </Pagination>
     )

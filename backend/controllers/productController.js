@@ -5,7 +5,7 @@ import Product from "../models/productModel.js"
 // @route   GET /api/products
 // @access  Public
 const getProducts = asyncHandler(async (req, res) => {
-  const pageSize = 10
+  const pageSize = 2
   const page = Number(req.query.pageNumber) || 1
 
   const keyword = req.query.keyword
@@ -105,7 +105,6 @@ const updateProduct = asyncHandler(async (req, res) => {
 // @access  Private
 const createProductReview = asyncHandler(async (req, res) => {
   const { rating, comment } = req.body
-
   const product = await Product.findById(req.params.id)
 
   if (product) {
@@ -117,7 +116,7 @@ const createProductReview = asyncHandler(async (req, res) => {
       res.status(400)
       throw new Error("Product already reviewed")
     }
-
+    console.log(rating)
     const review = {
       name: req.user.name,
       rating: Number(rating),
@@ -132,8 +131,9 @@ const createProductReview = asyncHandler(async (req, res) => {
     product.rating =
       product.reviews.reduce((acc, item) => item.rating + acc, 0) /
       product.reviews.length
-
+    console.log("working")
     await product.save()
+    console.log("working2")
     res.status(201).json({ message: "Review added" })
   } else {
     res.status(404)

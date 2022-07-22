@@ -4,7 +4,7 @@ const reviewSchema = mongoose.Schema(
   {
     name: { type: String, required: true },
     rating: { type: Number, required: true },
-    Comment: { type: String, required: true },
+    comment: { type: String, required: true },
     user: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
@@ -54,13 +54,11 @@ const productSchema = mongoose.Schema(
       required: true,
       default: 0,
     },
-
     price: {
       type: Number,
       required: true,
       default: 0,
     },
-
     countInStock: {
       type: Number,
       required: true,
@@ -71,6 +69,7 @@ const productSchema = mongoose.Schema(
     timestamps: true,
   }
 )
+
 const Product = mongoose.model("Product", productSchema)
 
 export default Product
