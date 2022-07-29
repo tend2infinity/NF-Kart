@@ -7,7 +7,9 @@ import Loader from "../components/Loader"
 import FormContainer from "../components/FormContainer"
 import { login } from "../actions/userActions"
 
-const LoginScreen = ({ location, history }) => {
+const LoginScreen = (props) => {
+  const { location, history,web3Handler,account,nft, marketplace } = props
+
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
 
@@ -21,11 +23,11 @@ const LoginScreen = ({ location, history }) => {
     if (userInfo) {
       history.push(redirect)
     }
-  }, [history, userInfo, redirect])
+  }, [history, userInfo, redirect, nft])
 
   const submitHandler = (e) => {
     e.preventDefault()
-    dispatch(login(email, password))
+    dispatch(login(email, password, account,nft,marketplace))
   }
 
   return (
@@ -54,10 +56,17 @@ const LoginScreen = ({ location, history }) => {
           ></Form.Control>
         </Form.Group>
 
-        <Button type='submit' variant='primary'>
+        <Button style={{marginTop:"1rem"}} onClick={web3Handler} disabled={account?true:false}>
+          Connect Ethereum Wallet
+        </Button>
+
+        <Button style={{marginTop:"1rem"}} type='submit' variant='primary' disabled={account? false:true}>
           Sign In
         </Button>
+
+
       </Form>
+
 
       <Row className='py-3'>
         <Col>
