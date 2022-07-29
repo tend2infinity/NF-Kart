@@ -1,19 +1,20 @@
 import e from "express"
 import AsyncHandler from "express-async-handler"
-import User from "../models/userModel.js"
-import generateToken from "../utils/generateToken.js"
+import User from "../models/userModel.mjs"
+import generateToken from "../utils/generateToken.mjs"
 
 //@desc   Auth user & get a token
 //@route POST /api/user/login
 //@access Public
 const authUser = AsyncHandler(async (req, res) => {
-  const { email, password } = req.body
+  const { email, password, walletId } = req.body
   const user = await User.findOne({ email })
   if (user && (await user.matchPassword(password))) {
     res.json({
       _id: user._id,
       name: user.name,
       email: user.email,
+      walletId: user.walletId,
       isAdmin: user.isAdmin,
       token: generateToken(user._id),
     })
@@ -27,7 +28,7 @@ const authUser = AsyncHandler(async (req, res) => {
 //@route POST /api/users
 //@access Public
 const registerUser = AsyncHandler(async (req, res) => {
-  const { name, email, password } = req.body
+  const { name, email, password, walletId } = req.body
   const userExists = await User.findOne({ email })
 
   if (userExists) {
@@ -39,6 +40,7 @@ const registerUser = AsyncHandler(async (req, res) => {
     name: name,
     email: email,
     password: password,
+    walletId: walletId
   })
   if (user) {
     res.status(201).json({
@@ -65,6 +67,7 @@ const getUserProfile = AsyncHandler(async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
+      walletId: walletId,
       isAdmin: user.isAdmin,
     })
   } else {
@@ -148,6 +151,7 @@ const updateUser = AsyncHandler(async (req, res) => {
       _id: updatedUser._id,
       name: updatedUser.name,
       email: updatedUser.email,
+      walletId: updateUser.walletId,
       isAdmin: updatedUser.isAdmin,
     })
     res.json

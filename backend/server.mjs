@@ -1,18 +1,18 @@
 import path from "path"
 import express from "express"
 import dotenv from "dotenv"
-import connectDB from "./config/db.js"
+import connectDB from "./config/db.mjs"
 import colors from "colors"
-import productRoutes from "./routes/productRoutes.js"
-import userRoutes from "./routes/userRoutes.js"
-import orderRoutes from "./routes/orderRoutes.js"
-import uploadRoutes from "./routes/uploadRoutes.js"
+import productRoutes from "./routes/productRoutes.mjs"
+import userRoutes from "./routes/userRoutes.mjs"
+import orderRoutes from "./routes/orderRoutes.mjs"
+import uploadRoutes from "./routes/uploadRoutes.mjs"
 import morgan from "morgan"
-import { notFound, errorHandler } from "./middleware/errorMiddleware.js"
+import { notFound, errorHandler } from "./middleware/errorMiddleware.mjs"
 
 dotenv.config()
 
-// console.log("HELLO", process.env.MONGO_URI)
+console.log("HELLO", process.env.MONGO_URI)
 
 connectDB()
 
