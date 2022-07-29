@@ -1,6 +1,8 @@
 # ProShop
 > eCommerce platform built with the MERN stack & Redux.
 
+The hosted website can be found [here](https://proshoponline.herokuapp.com) 
+
 ![image](https://user-images.githubusercontent.com/56078582/179729445-a71ea3b2-0021-4646-8474-73125bdbc5ae.png)
 ![image](https://user-images.githubusercontent.com/56078582/179729525-7c360197-44db-4434-8152-d30d896dc2e6.png)
 
