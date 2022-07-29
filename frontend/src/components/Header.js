@@ -1,14 +1,18 @@
 import React from "react"
 import { Route } from "react-router-dom"
-import { Navbar, Nav, Container, NavDropdown } from "react-bootstrap"
+import { Navbar, Nav, Container, NavDropdown, Button } from "react-bootstrap"
 import { useDispatch, useSelector } from "react-redux"
 import { logout } from "../actions/userActions"
 import SearchBox from "./SearchBox"
-const Header = () => {
+const Header = (props) => {
+  const { account, setAccount, setNFT, setMarketplace } = props;
   const userLogin = useSelector((state) => state.userLogin)
   const { userInfo } = userLogin
   const dispatch = useDispatch()
   const logoutHandler = () => {
+    setAccount(null);
+    setNFT({});
+    setMarketplace({});
     dispatch(logout())
   }
 
@@ -21,6 +25,7 @@ const Header = () => {
           <Navbar.Collapse id='basic-navbar-nav'>
             <Route render={({ history }) => <SearchBox history={history} />} />
             <Nav className='ml-auto'>
+              <div style={{display:'flex', alignItems:'center'}}>
               <Nav.Link href='/cart'>
                 <i className='fas fa-shopping-cart'></i>Cart
               </Nav.Link>
@@ -37,6 +42,19 @@ const Header = () => {
                   <i className='fa fa-user'></i>Sign In
                 </Nav.Link>
               )}
+              {userInfo && account ? (
+                <Nav.Link
+                  href={`https://etherscan.io/address/${account}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="button nav-button btn-sm ">
+                  <Button variant="outline-light">
+                    {account.slice(0, 5) + '...' + account.slice(38, 42)}
+                  </Button>
+
+                </Nav.Link>)
+                :
+                <div></div>}
               {userInfo && userInfo.isAdmin && (
                 <NavDropdown title='Admin' id='adminmenu'>
                   <NavDropdown.Item href='/admin/userlist'>
@@ -50,6 +68,9 @@ const Header = () => {
                   </NavDropdown.Item>
                 </NavDropdown>
               )}
+
+              </div>
+              
             </Nav>
           </Navbar.Collapse>
         </Container>

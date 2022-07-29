@@ -9,8 +9,8 @@ import {
   registerUser,
   updateUser,
   updateUserProfile,
-} from "../controllers/userController.js"
-import { protect, admin } from "../middleware/authMiddleware.js"
+} from "../controllers/userController.mjs"
+import { protect, admin } from "../middleware/authMiddleware.mjs"
 router.route("/").post(registerUser)
 router.route("/").get(protect, admin, getUsers)
 router.post("/login", authUser)
