@@ -27,7 +27,7 @@ const OrderScreen = ({ match, history }) => {
   const { order, loading, error } = orderDetails
 
   const orderPay = useSelector((state) => state.orderPay)
-  const { loading: loadingPay, success: successPay } = orderPay
+  const { loading: loadingPay, success: successPay, error: errorPay } = orderPay
 
   const orderDeliver = useSelector((state) => state.orderDeliver)
   const { loading: loadingDeliver, success: successDeliver } = orderDeliver
@@ -62,7 +62,6 @@ const OrderScreen = ({ match, history }) => {
       }
       document.body.appendChild(script)
     }
-
     if (!order || successPay || successDeliver || order._id !== orderId) {
       dispatch({ type: ORDER_PAY_RESET })
       dispatch({ type: ORDER_DELIVER_RESET })
@@ -223,6 +222,11 @@ const OrderScreen = ({ match, history }) => {
                     </Button>
                   </ListGroup.Item>
                 )}
+            </ListGroup>
+            <ListGroup>
+              <ListGroup.Item>
+                {errorPay && <Message variant='danger'>{errorPay}</Message>}
+              </ListGroup.Item>
             </ListGroup>
           </Card>
         </Col>
