@@ -6,6 +6,7 @@ import Message from "../components/Message"
 import Loader from "../components/Loader"
 import FormContainer from "../components/FormContainer"
 import { login } from "../actions/userActions"
+import { setContracts } from "../actions/contractActions"
 
 const LoginScreen = (props) => {
   const { location, history,web3Handler,account,nft, marketplace } = props
@@ -29,6 +30,9 @@ const LoginScreen = (props) => {
     e.preventDefault()
     dispatch(login(email, password, account,nft,marketplace))
   }
+
+  const EthWallet = () =>{
+    web3Handler()}
 
   return (
     <FormContainer>
@@ -56,7 +60,7 @@ const LoginScreen = (props) => {
           ></Form.Control>
         </Form.Group>
 
-        <Button style={{marginTop:"1rem"}} onClick={web3Handler} disabled={account?true:false}>
+        <Button style={{marginTop:"1rem"}} onClick={EthWallet} disabled={account?true:false}>
           Connect Ethereum Wallet
         </Button>
 

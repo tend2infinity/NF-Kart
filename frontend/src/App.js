@@ -25,11 +25,18 @@ import MarketplaceAddress from './contractsData/Marketplace-address.json'
 import NFTabi from './contractsData/NFT.json'
 import NFTAddress from './contractsData/NFT-address.json'
 import { ethers } from "ethers"
+import { removeContracts, setContracts } from "./actions/contractActions";
+import { useDispatch, useSelector } from "react-redux";
 
 const App = () => {
   const [account, setAccount] = useState(null)
   const [nft, setNFT] = useState({})
   const [marketplace, setMarketplace] = useState({})
+
+  const dispatch = useDispatch()
+
+  const userLogin = useSelector(state=>state.userLogin)
+  const {userInfo} = userLogin
 
   const web3Handler = async () => {
     console.log("yeah")
@@ -50,13 +57,22 @@ const App = () => {
     setMarketplace(marketplace)
     const nft = new ethers.Contract(NFTAddress.address, NFTabi.abi, signer)
     setNFT(nft)
+    console.log("account: ",account)
+
+    const contract = {
+      account:account,nft:nft,marketplace:marketplace
+    }
+    dispatch(setContracts(contract))
     console.log("fn completed")
   }
-
+  
   useEffect(()=>{
-    console.log(nft);
-    console.log(marketplace)
-  },[nft,marketplace])
+    if(nft==={} && userInfo){web3Handler() }
+  },[nft])
+  useEffect(()=>{
+    if(userInfo){web3Handler() }
+    else dispatch(removeContracts())
+  },[userInfo])
 
   return (
           <BrowserRouter>
@@ -74,7 +90,7 @@ const App = () => {
             <Route path='/shipping' component={ShippingScreen} />
             <Route path='/payment' component={PaymentScreen} />
             <Route path='/placeorder' component={PlaceOrderScreen} />
-            <Route path='/login' render={(props) => <LoginScreen {...props} web3Handler={web3Handler} account={account} nft={nft} marketplace={marketplace}/>}/>
+            <Route path='/login' render={(props) => <LoginScreen {...props} web3Handler={web3Handler} account={account} />}/>
             <Route path='/register' component={RegisterScreen} />
             <Route path='/profile' component={ProfileScreen} />
             <Route path='/product/:id' component={ProductScreen} />
@@ -83,7 +99,7 @@ const App = () => {
             <Route path='/admin/user/:id/edit' component={UserEditScreen} />
             <Route
               path='/admin/productlist'
-              render={(props) => <ProductListScreen {...props} account={account} nft={nft} marketplace={marketplace}/>} 
+              render={(props) => <ProductListScreen {...props} account={account} />} 
               component={ProductListScreen}
               exact
               />
