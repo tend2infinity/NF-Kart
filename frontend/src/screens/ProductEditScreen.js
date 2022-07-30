@@ -6,11 +6,16 @@ import { useDispatch, useSelector } from "react-redux"
 import Message from "../components/Message"
 import Loader from "../components/Loader"
 import FormContainer from "../components/FormContainer"
-import { listProductDetails, updateProduct } from "../actions/productActions"
+import { listProductDetails, updateProduct, updateProductTokenId } from "../actions/productActions"
 import { PRODUCT_UPDATE_RESET } from "../constants/productConstants"
+import { create as ipfsHttpClient } from 'ipfs-http-client'
+const client = ipfsHttpClient('https://ipfs.infura.io:5001/api/v0')
 
-const ProductEditScreen = ({ match, history }) => {
+const ProductEditScreen = (props) => {
+  const { match, history,account,nft,marketplace } = props
   const productId = match.params.id
+  console.log(nft);
+  console.log(marketplace)
 
   const [name, setName] = useState("")
   const [price, setPrice] = useState(0)
@@ -20,6 +25,45 @@ const ProductEditScreen = ({ match, history }) => {
   const [countInStock, setCountInStock] = useState(0)
   const [description, setDescription] = useState("")
   const [uploading, setUploading] = useState(false)
+  const [warrantyPeriod,setWarrantyPeriod] = useState(0)
+  const [tokenId, setTokenId] = useState("")
+
+  const uploadToIPFS = async (event) => {
+    event.preventDefault()
+    setUploading(true)
+    const file = event.target.files[0]
+    if (typeof file !== 'undefined') {
+      try {
+        const result = await client.add(file)
+        console.log(result)
+        setImage(`https://ipfs.infura.io/ipfs/${result.path}`)
+        setUploading(false)
+      } catch (error){
+        console.log("ipfs image upload error: ", error)
+        setUploading(false)
+      }
+    }
+  }
+  const createNFT = async () => {
+    try{
+      console.log(image)
+      mintThenList()
+    } catch(error) {
+      console.log("create nft error: ", error)
+    }
+  }
+  const mintThenList = async () => {
+    // mint nft 
+    await(await nft.mint()).wait()
+    // get tokenId of new nft 
+    const id = await nft.tokenCount()
+    setTokenId(id)
+    console.log("TokenId",id)
+    // approve marketplace to spend nft
+    await(await nft.setApprovalForAll(marketplace.address, true)).wait()
+    // add nft to marketplace
+    await(await marketplace.makeItem(nft.address, id, warrantyPeriod)).wait()
+  }
 
   const dispatch = useDispatch()
 
@@ -48,35 +92,40 @@ const ProductEditScreen = ({ match, history }) => {
         setCategory(product.category)
         setCountInStock(product.countInStock)
         setDescription(product.description)
+        setWarrantyPeriod(product.warrantyPeriod)
+        setTokenId(product.tokenId)
       }
     }
   }, [dispatch, history, productId, product, successUpdate])
 
-  const uploadFileHandler = async (e) => {
-    const file = e.target.files[0]
-    const formData = new FormData()
-    formData.append("image", file)
-    setUploading(true)
+  // const uploadFileHandler = async (e) => {
+  //   const file = e.target.files[0]
+  //   const formData = new FormData()
+  //   formData.append("image", file)
+  //   setUploading(true)
 
-    try {
-      const config = {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
+  //   try {
+  //     const config = {
+  //       headers: {
+  //         "Content-Type": "multipart/form-data",
+  //       },
+  //     }
 
-      const { data } = await axios.post("/api/upload", formData, config)
+  //     const { data } = await axios.post("/api/upload", formData, config)
 
-      setImage(data)
-      setUploading(false)
-    } catch (error) {
-      console.error(error)
-      setUploading(false)
-    }
-  }
+  //     setImage(data)
+  //     setUploading(false)
+  //   } catch (error) {
+  //     console.error(error)
+  //     setUploading(false)
+  //   }
+  // }
 
   const submitHandler = (e) => {
     e.preventDefault()
+    console.log(image)
+    warrantyPeriod>0 ? 
+    createNFT() &&
     dispatch(
       updateProduct({
         _id: productId,
@@ -87,8 +136,14 @@ const ProductEditScreen = ({ match, history }) => {
         category,
         description,
         countInStock,
+        warrantyPeriod,
+      }),
+      updateProductTokenId({
+        _id:productId,
+        tokenId: tokenId
       })
-    )
+    ) :
+    console.log("Add a warranty period to create an NFT");
   }
 
   return (
@@ -128,18 +183,12 @@ const ProductEditScreen = ({ match, history }) => {
 
             <Form.Group controlId='image'>
               <Form.Label>Image</Form.Label>
-              <Form.Control
-                type='text'
-                placeholder='Enter image url'
-                value={image}
-                onChange={(e) => setImage(e.target.value)}
-              ></Form.Control>
               <input
                 type='file'
                 id='image-file'
                 // label='Sleect File'
                 custom
-                onChange={uploadFileHandler}
+                onChange={uploadToIPFS}
               ></input>
               {uploading && <Loader />}
             </Form.Group>
@@ -181,6 +230,16 @@ const ProductEditScreen = ({ match, history }) => {
                 placeholder='Enter description'
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+              ></Form.Control>
+            </Form.Group>
+
+            <Form.Group controlId='warrantyPeriod'>
+              <Form.Label>Warranty period (in months)</Form.Label>
+              <Form.Control
+                type='number'
+                placeholder='Enter Warranty Period'
+                value={warrantyPeriod}
+                onChange={(e) => setWarrantyPeriod(e.target.value)}
               ></Form.Control>
             </Form.Group>
 

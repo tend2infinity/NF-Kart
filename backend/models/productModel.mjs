@@ -31,6 +31,11 @@ const productSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+    warrantyPeriod: {
+      type: Number,
+      required: true,
+      default:0,
+    },
     image: {
       type: String,
       required: true,

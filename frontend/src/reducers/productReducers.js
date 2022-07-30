@@ -23,6 +23,9 @@ import {
   PRODUCT_TOP_REQUEST,
   PRODUCT_TOP_SUCCESS,
   PRODUCT_TOP_FAIL,
+  PRODUCT_UPDATE_TOKEN_REQUEST,
+  PRODUCT_UPDATE_TOKEN_SUCCESS,
+  PRODUCT_UPDATE_TOKEN_FAIL,
 } from "../constants/productConstants"
 
 export const productListReducer = (state = { products: [] }, action) => {
@@ -97,6 +100,19 @@ export const productUpdateReducer = (state = { product: {} }, action) => {
       return { loading: false, error: action.payload }
     case PRODUCT_UPDATE_RESET:
       return { product: {} }
+    default:
+      return state
+  }
+}
+
+export const productUpdateTokenReducer = (state = { product: {} }, action) => {
+  switch (action.type) {
+    case PRODUCT_UPDATE_TOKEN_REQUEST:
+      return { loading: true }
+    case PRODUCT_UPDATE_TOKEN_SUCCESS:
+      return { loading: false, success: true, product: action.payload }
+    case PRODUCT_UPDATE_TOKEN_FAIL:
+      return { loading: false, error: action.payload }
     default:
       return state
   }

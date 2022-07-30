@@ -1,5 +1,5 @@
 import React from "react"
-import { useState } from 'react';
+import { useState,useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Switch } from "react-router-dom";
 import { Container } from "react-bootstrap"
 import Header from "./components/Header"
@@ -52,6 +52,12 @@ const App = () => {
     setNFT(nft)
     console.log("fn completed")
   }
+
+  useEffect(()=>{
+    console.log(nft);
+    console.log(marketplace)
+  },[nft,marketplace])
+
   return (
           <BrowserRouter>
     
@@ -68,7 +74,7 @@ const App = () => {
             <Route path='/shipping' component={ShippingScreen} />
             <Route path='/payment' component={PaymentScreen} />
             <Route path='/placeorder' component={PlaceOrderScreen} />
-            <Route path='/login' render={(props) => <LoginScreen {...props} web3Handler={web3Handler} account={account}/>}/>
+            <Route path='/login' render={(props) => <LoginScreen {...props} web3Handler={web3Handler} account={account} nft={nft} marketplace={marketplace}/>}/>
             <Route path='/register' component={RegisterScreen} />
             <Route path='/profile' component={ProfileScreen} />
             <Route path='/product/:id' component={ProductScreen} />
@@ -77,6 +83,7 @@ const App = () => {
             <Route path='/admin/user/:id/edit' component={UserEditScreen} />
             <Route
               path='/admin/productlist'
+              render={(props) => <ProductListScreen {...props} account={account} nft={nft} marketplace={marketplace}/>} 
               component={ProductListScreen}
               exact
               />
@@ -85,7 +92,7 @@ const App = () => {
               component={ProductListScreen}
               exact
               />
-            <Route path='/admin/product/:id/edit' component={ProductEditScreen} />
+            <Route path='/admin/product/:id/edit' render={(props) => <ProductEditScreen {...props} account={account} nft={nft} marketplace={marketplace}/>} />
             <Route path='/admin/orderlist' component={OrderListScreen} />
             <Route path='/search/:keyword' component={HomeScreen} exact />
             <Route path='/page/:pageNumber' component={HomeScreen} exact />

@@ -28,6 +28,7 @@ import {
 import { ORDER_LIST_MY_RESET } from "../constants/orderConstants"
 
 export const login = (email, password, account, nft, marketplace) => async (dispatch) => {
+  console.log(account,nft,marketplace)
   try {
     dispatch({
       type: USER_LOGIN_REQUEST,
