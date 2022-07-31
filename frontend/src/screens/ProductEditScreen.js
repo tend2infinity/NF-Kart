@@ -6,11 +6,19 @@ import { useDispatch, useSelector } from "react-redux"
 import Message from "../components/Message"
 import Loader from "../components/Loader"
 import FormContainer from "../components/FormContainer"
-import { listProductDetails, updateProduct } from "../actions/productActions"
+import { listProductDetails, updateProduct, updateProductTokenId } from "../actions/productActions"
 import { PRODUCT_UPDATE_RESET } from "../constants/productConstants"
+import { create as ipfsHttpClient } from 'ipfs-http-client'
+import { token } from "morgan"
+const client = ipfsHttpClient('https://ipfs.infura.io:5001/api/v0')
 
-const ProductEditScreen = ({ match, history }) => {
+const ProductEditScreen = (props) => {
+  const { match, history,account } = props
   const productId = match.params.id
+
+  const nft = useSelector(state => state.contractDetails.nft)
+  const marketplace = useSelector(state => state.contractDetails.marketplace)
+
 
   const [name, setName] = useState("")
   const [price, setPrice] = useState(0)
@@ -20,6 +28,53 @@ const ProductEditScreen = ({ match, history }) => {
   const [countInStock, setCountInStock] = useState(0)
   const [description, setDescription] = useState("")
   const [uploading, setUploading] = useState(false)
+  const [warrantyPeriod,setWarrantyPeriod] = useState(0)
+  const [tokenURI, setTokenURI] = useState("")
+
+  const uploadToIPFS = async (event) => {
+    event.preventDefault()
+    setUploading(true)
+    const file = event.target.files[0]
+    if (typeof file !== 'undefined') {
+      try {
+        const result = await client.add(file)
+        console.log(result)
+        setImage(`https://ipfs.infura.io/ipfs/${result.path}`)
+        setUploading(false)
+      } catch (error){
+        console.log("ipfs image upload error: ", error)
+        setUploading(false)
+      }
+    }
+  }
+  const createNFT = async () => {
+    try{
+      console.log(image)
+      const uri = await mintThenList()
+      return uri;
+    } catch(error) {
+      console.log("create nft error: ", error)
+    }
+  }
+  const mintThenList = async () => {
+    // mint nft 
+    await(await nft.mint()).wait()
+    const itemCount = await marketplace.itemCount()
+    console.log("itemCount",itemCount);
+    // get tokenId of new nft 
+    const id = await nft.tokenCount()
+    const result = await client.add(JSON.stringify({id}));
+    const uri = `https://ipfs.infura.io/ipfs/${result.path}`
+    console.log("uri",uri);
+    setTokenURI(uri)
+    console.log("TokenId",id)
+    // approve marketplace to spend nft
+    await(await nft.setApprovalForAll(marketplace.address, true)).wait()
+    // add nft to marketplace
+    await(await marketplace.makeItem(nft.address, id, warrantyPeriod)).wait()
+    // dispatch(updateProductTokenId(id))
+    return uri;
+  }
 
   const dispatch = useDispatch()
 
@@ -34,6 +89,7 @@ const ProductEditScreen = ({ match, history }) => {
   } = productUpdate
 
   useEffect(() => {
+
     if (successUpdate) {
       dispatch({ type: PRODUCT_UPDATE_RESET })
       history.push("/admin/productlist")
@@ -48,51 +104,68 @@ const ProductEditScreen = ({ match, history }) => {
         setCategory(product.category)
         setCountInStock(product.countInStock)
         setDescription(product.description)
+        setWarrantyPeriod(product.warrantyPeriod)
+        setTokenURI(product.tokenURI)
       }
     }
   }, [dispatch, history, productId, product, successUpdate])
 
-  const uploadFileHandler = async (e) => {
-    const file = e.target.files[0]
-    const formData = new FormData()
-    formData.append("image", file)
-    setUploading(true)
+  // const uploadFileHandler = async (e) => {
+  //   const file = e.target.files[0]
+  //   const formData = new FormData()
+  //   formData.append("image", file)
+  //   setUploading(true)
 
-    try {
-      const config = {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
+  //   try {
+  //     const config = {
+  //       headers: {
+  //         "Content-Type": "multipart/form-data",
+  //       },
+  //     }
 
-      const { data } = await axios.post("/api/upload", formData, config)
+  //     const { data } = await axios.post("/api/upload", formData, config)
 
-      setImage(data)
-      setUploading(false)
-    } catch (error) {
-      console.error(error)
-      setUploading(false)
-    }
-  }
+  //     setImage(data)
+  //     setUploading(false)
+  //   } catch (error) {
+  //     console.error(error)
+  //     setUploading(false)
+  //   }
+  // }
 
-  const submitHandler = (e) => {
+  const submitHandler = async (e) => {
+
     e.preventDefault()
-    dispatch(
-      updateProduct({
-        _id: productId,
-        name,
-        price,
-        image,
-        brand,
-        category,
-        description,
-        countInStock,
-      })
-    )
+    console.log(image)
+    if(warrantyPeriod>0) {
+      const uri = await createNFT() 
+      dispatch(
+         updateProduct({
+           _id: productId,
+           name,
+           price,
+           image,
+           brand,
+           category,
+           description,
+           countInStock,
+           warrantyPeriod,
+           tokenURI,
+         }) )
+         dispatch(     
+        updateProductTokenId({
+          _id:productId,
+          tokenURI: uri
+        }))
+    } 
+    else{
+      console.log("Add a warranty period to create an NFT");
+    }
   }
 
   return (
     <>
+    
       <Link to='/admin/productlist' className='btn btn-light my-3'>
         Go Back
       </Link>
@@ -128,18 +201,12 @@ const ProductEditScreen = ({ match, history }) => {
 
             <Form.Group controlId='image'>
               <Form.Label>Image</Form.Label>
-              <Form.Control
-                type='text'
-                placeholder='Enter image url'
-                value={image}
-                onChange={(e) => setImage(e.target.value)}
-              ></Form.Control>
               <input
                 type='file'
                 id='image-file'
                 // label='Sleect File'
                 custom
-                onChange={uploadFileHandler}
+                onChange={uploadToIPFS}
               ></input>
               {uploading && <Loader />}
             </Form.Group>
@@ -181,6 +248,16 @@ const ProductEditScreen = ({ match, history }) => {
                 placeholder='Enter description'
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+              ></Form.Control>
+            </Form.Group>
+
+            <Form.Group controlId='warrantyPeriod'>
+              <Form.Label>Warranty period (in months)</Form.Label>
+              <Form.Control
+                type='number'
+                placeholder='Enter Warranty Period'
+                value={warrantyPeriod}
+                onChange={(e) => setWarrantyPeriod(e.target.value)}
               ></Form.Control>
             </Form.Group>
 

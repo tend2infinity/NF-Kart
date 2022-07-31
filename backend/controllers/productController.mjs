@@ -58,7 +58,6 @@ const deleteProduct = asyncHandler(async (req, res) => {
 // @route   POST /api/products
 // @access  Private/Admin
 const createProduct = asyncHandler(async (req, res) => {
-  const tokenId = req.body.tokenId
   const product = new Product({
     name: "Sample name",
     price: 0,
@@ -69,7 +68,8 @@ const createProduct = asyncHandler(async (req, res) => {
     countInStock: 0,
     numReviews: 0,
     description: "Sample description",
-    tokenId: tokenId
+    warrantyPeriod: 0,
+    tokenURI: "Sample Token Id"
   })
 
   const createdProduct = await product.save()
@@ -80,11 +80,11 @@ const createProduct = asyncHandler(async (req, res) => {
 // @route   PUT /api/products/:id
 // @access  Private/Admin
 const updateProduct = asyncHandler(async (req, res) => {
-  const { name, price, description, image, brand, category, countInStock } =
+  const { name, price, description, image, brand, category, countInStock, warrantyPeriod } =
     req.body
 
   const product = await Product.findById(req.params.id)
-
+  console.log(product)
   if (product) {
     product.name = name
     product.price = price
@@ -93,13 +93,32 @@ const updateProduct = asyncHandler(async (req, res) => {
     product.brand = brand
     product.category = category
     product.countInStock = countInStock
-    product.tokenId = product.tokenId
+    product.warrantyPeriod = warrantyPeriod
+    product.tokenURI = "new product Id"
 
     const updatedProduct = await product.save()
     res.json(updatedProduct)
   } else {
     res.status(404)
     throw new Error("Product not found")
+  }
+})
+
+//@desc Update Product Token Id
+//@route POST /api/products/updatetokenId/:id
+//@access Private/Admin
+const updateProductTokenId = asyncHandler(async (req,res) => {
+  console.log("req body",req.body)
+  const {tokenURI} = req.body
+  const product = await Product.findById(req.params.id)
+  console.log(product)
+  if(product){
+    product.tokenURI = tokenURI
+    const updatedProduct = await product.save()
+    res.json(updatedProduct)
+  }else {
+    res.status(404)
+    throw new Error("Error updating product Token Id")
   }
 })
 
@@ -161,4 +180,5 @@ export {
   updateProduct,
   createProductReview,
   getTopProducts,
+  updateProductTokenId
 }

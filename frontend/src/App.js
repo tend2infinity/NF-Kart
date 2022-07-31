@@ -1,6 +1,11 @@
 import React from "react"
+<<<<<<< HEAD
 import { useState } from "react"
 import { BrowserRouter, Routes, Route, Switch } from "react-router-dom"
+=======
+import { useState,useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Switch } from "react-router-dom";
+>>>>>>> f7f97a6db178ec55f12746c9afee252e1c80d3a6
 import { Container } from "react-bootstrap"
 import Header from "./components/Header"
 import Footer from "./components/Footer"
@@ -25,11 +30,18 @@ import MarketplaceAddress from "./contractsData/Marketplace-address.json"
 import NFTabi from "./contractsData/NFT.json"
 import NFTAddress from "./contractsData/NFT-address.json"
 import { ethers } from "ethers"
+import { removeContracts, setContracts } from "./actions/contractActions";
+import { useDispatch, useSelector } from "react-redux";
 
 const App = () => {
   const [account, setAccount] = useState(null)
   const [nft, setNFT] = useState({})
   const [marketplace, setMarketplace] = useState({})
+
+  const dispatch = useDispatch()
+
+  const userLogin = useSelector(state=>state.userLogin)
+  const {userInfo} = userLogin
 
   const web3Handler = async () => {
     console.log("yeah")
@@ -56,8 +68,33 @@ const App = () => {
     setMarketplace(marketplace)
     const nft = new ethers.Contract(NFTAddress.address, NFTabi.abi, signer)
     setNFT(nft)
+    console.log("account: ",account)
+
+    const contract = {
+      account:account,nft:nft,marketplace:marketplace
+    }
+    dispatch(setContracts(contract))
     console.log("fn completed")
   }
+  // useEffect=(()=>{
+  //   loadMarketplaceItemCount()
+  // },[])
+
+  useEffect(()=>{
+    if(nft==={} && userInfo){
+      web3Handler()
+     }
+  },[nft])
+
+  useEffect(()=>{
+    if(userInfo){
+      web3Handler()
+    }
+    else dispatch(removeContracts())
+  },[userInfo])
+
+
+
   return (
     <BrowserRouter>
       <Header
@@ -67,6 +104,7 @@ const App = () => {
         setMarketplace={setMarketplace}
       />
       <main className='py-3'>
+<<<<<<< HEAD
         <Switch>
           <Container>
             <Route path='/order/:id'>
@@ -86,6 +124,19 @@ const App = () => {
                 />
               )}
             />
+=======
+            <Switch>
+        <Container>
+              
+  
+            <Route path='/order/:id'
+            render={(props) => <OrderScreen {...props} web3Handler={web3Handler} account={account} />} />
+           
+            <Route path='/shipping' component={ShippingScreen} />
+            <Route path='/payment' component={PaymentScreen} />
+            <Route path='/placeorder' component={PlaceOrderScreen} />
+            <Route path='/login' render={(props) => <LoginScreen {...props} web3Handler={web3Handler} account={account} nft={nft} marketplace={marketplace} />}/>
+>>>>>>> f7f97a6db178ec55f12746c9afee252e1c80d3a6
             <Route path='/register' component={RegisterScreen} />
             <Route path='/profile' component={ProfileScreen} />
             <Route path='/product/:id' component={ProductScreen} />
@@ -94,6 +145,7 @@ const App = () => {
             <Route path='/admin/user/:id/edit' component={UserEditScreen} />
             <Route
               path='/admin/productlist'
+              render={(props) => <ProductListScreen {...props} account={account} />} 
               component={ProductListScreen}
               exact
             />
@@ -101,11 +153,16 @@ const App = () => {
               path='/admin/productlist/:pageNumber'
               component={ProductListScreen}
               exact
+<<<<<<< HEAD
             />
             <Route
               path='/admin/product/:id/edit'
               component={ProductEditScreen}
             />
+=======
+              />
+            <Route path='/admin/product/:id/edit' render={(props) => <ProductEditScreen {...props} account={account} nft={nft} marketplace={marketplace}/>} />
+>>>>>>> f7f97a6db178ec55f12746c9afee252e1c80d3a6
             <Route path='/admin/orderlist' component={OrderListScreen} />
             <Route path='/search/:keyword' component={HomeScreen} exact />
             <Route path='/page/:pageNumber' component={HomeScreen} exact />
