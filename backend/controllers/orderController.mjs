@@ -1,6 +1,6 @@
 import asyncHandler from "express-async-handler"
 import Order from "../models/orderModel.mjs"
-
+import sendMail from "../scripts/warrantyMail.mjs"
 //@desc   Create new order
 //@route GET /api/orders
 //@access Private
@@ -40,7 +40,7 @@ const addOrderItems = asyncHandler(async (req, res) => {
 const getOrderById = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id).populate(
     "user",
-    "orderItems",
+    "orderItems"
   )
   if (order) {
     res.json(order)
@@ -53,6 +53,7 @@ const getOrderById = asyncHandler(async (req, res) => {
 //@route GET /api/orders/:id/pay
 //@access Private
 const updateOrderToPaid = asyncHandler(async (req, res) => {
+  const { email, productid, tokenid } = req.body
   const order = await Order.findById(req.params.id)
 
   if (order) {
@@ -66,6 +67,7 @@ const updateOrderToPaid = asyncHandler(async (req, res) => {
       email_address: req.body.payer.email_address,
     }
     const updatedOrder = await order.save()
+    sendMail("klakshya170@gmail.com", "1234", "abcd")
     res.json(updatedOrder)
   } else {
     res.status(404)

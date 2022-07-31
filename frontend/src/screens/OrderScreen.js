@@ -6,7 +6,7 @@ import { Row, Col, ListGroup, Image, Card, Button } from "react-bootstrap"
 import { useDispatch, useSelector } from "react-redux"
 import Message from "../components/Message"
 import Loader from "../components/Loader"
-import Alert from 'react-bootstrap/Alert';
+import Alert from "react-bootstrap/Alert"
 import {
   getOrderDetails,
   payOrder,
@@ -20,11 +20,11 @@ import {
 
 const OrderScreen = ({ match, history }) => {
   const orderId = match.params.id
-  const [showAlert, setShowAlert] = useState(false);
+  const [showAlert, setShowAlert] = useState(false)
 
   const [sdkReady, setSdkReady] = useState(false)
-  const [productIdArray, setProductIdArray] = useState([]);
-  const [nftDetails, setNftDetails] = useState([]);
+  const [productIdArray, setProductIdArray] = useState([])
+  const [nftDetails, setNftDetails] = useState([])
   const dispatch = useDispatch()
 
   const orderDetails = useSelector((state) => state.orderDetails)
@@ -33,7 +33,7 @@ const OrderScreen = ({ match, history }) => {
   // const isPaid = order.length>0 ? order.is
   const nft = useSelector((state) => state.contractDetails.nft)
   const marketplace = useSelector((state) => state.contractDetails.marketplace)
-  const cart = useSelector((state) => state.cart);
+  const cart = useSelector((state) => state.cart)
   const { cartItems } = cart
 
   const productDetails = useSelector((state) => state.productDetails)
@@ -60,21 +60,25 @@ const OrderScreen = ({ match, history }) => {
   }
 
   useEffect(() => {
-    if (productIdArray.length > 0 && marketplace && Object.keys(marketplace).length > 0 && nft) {
+    if (
+      productIdArray.length > 0 &&
+      marketplace &&
+      Object.keys(marketplace).length > 0 &&
+      nft
+    ) {
       getNftData()
     }
-
   }, [productIdArray, marketplace, nft, setProductIdArray])
 
   const getNftData = async () => {
     let nftData = []
-    let itemTokenURI = [];
+    let itemTokenURI = []
     if (marketplace) {
       const itemCount = await marketplace.itemCount()
       productIdArray.map(async (uriLink) => {
-        if(uriLink){
-          let response = await fetch(uriLink.tokenId);
-          let json = await response.json();
+        if (uriLink) {
+          let response = await fetch(uriLink.tokenId)
+          let json = await response.json()
           let obj = {}
           obj.result = json
           obj.dbID = uriLink.dbID
@@ -83,10 +87,15 @@ const OrderScreen = ({ match, history }) => {
       })
       if (marketplace) {
         for (let i = 1; i <= itemCount; i++) {
-          const item = await marketplace.items(i);
+          const item = await marketplace.items(i)
           const owner = await nft.ownerOf(item.tokenId)
-          itemTokenURI.map(x => {
-            if (x && x.result && x.result.id && item.tokenId._hex === x.result.id.hex) {
+          itemTokenURI.map((x) => {
+            if (
+              x &&
+              x.result &&
+              x.result.id &&
+              item.tokenId._hex === x.result.id.hex
+            ) {
               let obj = {}
               obj.tokenId = item.tokenId
               obj.sold = item.sold
@@ -102,9 +111,8 @@ const OrderScreen = ({ match, history }) => {
       }
     }
 
-
-    console.log(nftData);
-    setNftDetails(nftData);
+    console.log(nftData)
+    setNftDetails(nftData)
     console.log("get nft works")
   }
 
@@ -113,11 +121,11 @@ const OrderScreen = ({ match, history }) => {
       history.push("/login")
     }
     console.log(nftDetails)
-    let productIds = [];
+    let productIds = []
     let productTokenIds = []
     if (order) {
-      order.orderItems.map(item => {
-        productIds.push(item.product);
+      order.orderItems.map((item) => {
+        productIds.push(item.product)
       })
     }
     productIds.map(async (productId) => {
@@ -128,8 +136,7 @@ const OrderScreen = ({ match, history }) => {
         obj.tokenId = data.tokenURI
         obj.dbID = data._id
         productTokenIds.push(obj)
-      }
-      catch (error) {
+      } catch (error) {
         console.log(error)
       }
     })
@@ -161,31 +168,32 @@ const OrderScreen = ({ match, history }) => {
     }
   }, [dispatch, orderId, successPay, successDeliver, order, userInfo, history])
 
-
-
   const transferNFT = async () => {
     const itemCount = await marketplace.itemCount()
-    let itemTokenURI = [];
+    let itemTokenURI = []
     cartItems.map(async (item) => {
-      const uri = item.tokenURI;
-      let response = await fetch(uri);
-      let json = await response.json();
+      const uri = item.tokenURI
+      let response = await fetch(uri)
+      let json = await response.json()
       itemTokenURI.push(json)
     })
-    let matchItemId = null;
+    let matchItemId = null
 
-    console.log("prev item count", itemCount);
+    console.log("prev item count", itemCount)
     const dateInSecs = Math.floor(new Date().getTime() / 1000)
     for (let i = 1; i <= itemCount; i++) {
       const item = await marketplace.items(i)
       console.log("tokenId", item.tokenId)
+      // eslint-disable-next-line no-loop-func
       itemTokenURI.map(async (uri) => {
-        if(uri){
+        if (uri) {
           console.log("uri", uri.id)
           if (uri && uri.id && uri.id.hex === item.tokenId._hex) {
             matchItemId = await marketplace.items(i).itemId
             console.log("linear search complete, match found", uri.id)
-            await (await marketplace.purchaseItem(item.itemId, dateInSecs)).wait()
+            await (
+              await marketplace.purchaseItem(item.itemId, dateInSecs)
+            ).wait()
             setShowAlert(true)
           }
         }
@@ -195,15 +203,22 @@ const OrderScreen = ({ match, history }) => {
       const itemSoldStatus = await marketplace.items(matchItemId)
       console.log("item turned to sold", itemSoldStatus.sold)
     }
-
   }
-
 
   const successPaymentHandler = (paymentResult) => {
     console.log(paymentResult)
-
-    dispatch(payOrder(orderId, paymentResult))
     transferNFT()
+    if (nftDetails.length > 0) {
+      dispatch(
+        payOrder(
+          orderId,
+          userInfo.email,
+          order.orderItems[0].product,
+          nftDetails.tokenId,
+          paymentResult
+        )
+      )
+    }
   }
 
   const deliverHandler = () => {
@@ -216,7 +231,14 @@ const OrderScreen = ({ match, history }) => {
     <Message variant='danger'>{error}</Message>
   ) : (
     <>
-      <Alert show={showAlert} onClose={() => setShowAlert(false)} dismissible variant="success"><h5> Nft Issued Successfully! </h5></Alert>
+      <Alert
+        show={showAlert}
+        onClose={() => setShowAlert(false)}
+        dismissible
+        variant='success'
+      >
+        <h5> Nft Issued Successfully! </h5>
+      </Alert>
       <h1>Order {order._id}</h1>
       <Row>
         <Col md={8}>
@@ -266,48 +288,65 @@ const OrderScreen = ({ match, history }) => {
                 <div>
                   <ListGroup variant='flush'>
                     {order.orderItems.map((item, index) => {
-                      return nftDetails.length > 0 && 
-                      nftDetails.map(nft => {
-                        return nft.dbID === item.product && 
-                          <ListGroup.Item key={index}>
-                            <Row>
-                              <Col md={2}>
-                                <Image
-                                  src={item.image}
-                                  alt={item.name}
-                                  fluid
-                                  rounded
-                                />
-                              </Col>
-                              <Col sm={5}>
-                                <Link to={`/product/${item.product}`}>
-                                  {item.name}
-                                </Link>
-                              </Col>
-                              <Col sm={5}>
-                                {item.qty} x ${item.price} = ${item.qty * item.price}
-                              </Col>
-                              <Col sm={5}>
-                                Owner Account : {nft.owner}
-                              </Col>
-                              <Col sm={5}>
-                                Warranty Period : {(nft.warrantyPeriod).toNumber()} Months
-                              </Col>
-                              <Col sm={5}>
-                               Warranty Start Period : {  new Date(nft.warrantyStartPeriod*1000).getUTCDate()} | {new Date(nft.warrantyStartPeriod*1000).getUTCMonth() } | { new Date(nft.warrantyStartPeriod*1000).getUTCFullYear()} 
-                              </Col>
-                              <Col sm={5}>
-                               Warranty Expired : { nft.warrantyOver? "True":"False" } 
-                              </Col>
-                            </Row>
-                          </ListGroup.Item>
-                        
-                      })
+                      return (
+                        nftDetails.length > 0 &&
+                        nftDetails.map((nft) => {
+                          return (
+                            nft.dbID === item.product && (
+                              <ListGroup.Item key={index}>
+                                <Row>
+                                  <Col md={2}>
+                                    <Image
+                                      src={item.image}
+                                      alt={item.name}
+                                      fluid
+                                      rounded
+                                    />
+                                  </Col>
+                                  <Col sm={5}>
+                                    <Link to={`/product/${item.product}`}>
+                                      {item.name}
+                                    </Link>
+                                  </Col>
+                                  <Col sm={5}>
+                                    {item.qty} x ${item.price} = $
+                                    {item.qty * item.price}
+                                  </Col>
+                                  <Col sm={5}>Owner Account : {nft.owner}</Col>
+                                  <Col sm={5}>
+                                    Warranty Period :{" "}
+                                    {nft.warrantyPeriod.toNumber()} Months
+                                  </Col>
+                                  <Col sm={5}>
+                                    Warranty Start Period :{" "}
+                                    {new Date(
+                                      nft.warrantyStartPeriod * 1000
+                                    ).getUTCDate()}{" "}
+                                    |{" "}
+                                    {new Date(
+                                      nft.warrantyStartPeriod * 1000
+                                    ).getUTCMonth()}{" "}
+                                    |{" "}
+                                    {new Date(
+                                      nft.warrantyStartPeriod * 1000
+                                    ).getUTCFullYear()}
+                                  </Col>
+                                  <Col sm={5}>
+                                    Warranty Expired :{" "}
+                                    {nft.warrantyOver ? "True" : "False"}
+                                  </Col>
+                                </Row>
+                              </ListGroup.Item>
+                            )
+                          )
+                        })
+                      )
                     })}
                   </ListGroup>
-                  <Button onClick={getNftData} disabled={nftDetails.length > 0}>Get NFT Data</Button>
+                  <Button onClick={getNftData} disabled={nftDetails.length > 0}>
+                    Get NFT Data
+                  </Button>
                 </div>
-
               )}
             </ListGroup.Item>
           </ListGroup>

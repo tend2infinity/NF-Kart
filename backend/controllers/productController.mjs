@@ -1,6 +1,5 @@
 import asyncHandler from "express-async-handler"
 import Product from "../models/productModel.mjs"
-
 // @desc    Fetch all products
 // @route   GET /api/products
 // @access  Public
@@ -21,7 +20,6 @@ const getProducts = asyncHandler(async (req, res) => {
   const products = await Product.find({ ...keyword })
     .limit(pageSize)
     .skip(pageSize * (page - 1))
-
   res.json({ products, page, pages: Math.ceil(count / pageSize) })
 })
 
@@ -69,7 +67,7 @@ const createProduct = asyncHandler(async (req, res) => {
     numReviews: 0,
     description: "Sample description",
     warrantyPeriod: 0,
-    tokenURI: "Sample Token Id"
+    tokenURI: "Sample Token Id",
   })
 
   const createdProduct = await product.save()
@@ -80,8 +78,16 @@ const createProduct = asyncHandler(async (req, res) => {
 // @route   PUT /api/products/:id
 // @access  Private/Admin
 const updateProduct = asyncHandler(async (req, res) => {
-  const { name, price, description, image, brand, category, countInStock, warrantyPeriod } =
-    req.body
+  const {
+    name,
+    price,
+    description,
+    image,
+    brand,
+    category,
+    countInStock,
+    warrantyPeriod,
+  } = req.body
 
   const product = await Product.findById(req.params.id)
   console.log(product)
@@ -107,16 +113,16 @@ const updateProduct = asyncHandler(async (req, res) => {
 //@desc Update Product Token Id
 //@route POST /api/products/updatetokenId/:id
 //@access Private/Admin
-const updateProductTokenId = asyncHandler(async (req,res) => {
-  console.log("req body",req.body)
-  const {tokenURI} = req.body
+const updateProductTokenId = asyncHandler(async (req, res) => {
+  console.log("req body", req.body)
+  const { tokenURI } = req.body
   const product = await Product.findById(req.params.id)
   console.log(product)
-  if(product){
+  if (product) {
     product.tokenURI = tokenURI
     const updatedProduct = await product.save()
     res.json(updatedProduct)
-  }else {
+  } else {
     res.status(404)
     throw new Error("Error updating product Token Id")
   }
@@ -180,5 +186,5 @@ export {
   updateProduct,
   createProductReview,
   getTopProducts,
-  updateProductTokenId
+  updateProductTokenId,
 }
