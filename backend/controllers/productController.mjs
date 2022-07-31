@@ -69,7 +69,7 @@ const createProduct = asyncHandler(async (req, res) => {
     numReviews: 0,
     description: "Sample description",
     warrantyPeriod: 0,
-    tokenId: "Sample Token Id"
+    tokenURI: "Sample Token Id"
   })
 
   const createdProduct = await product.save()
@@ -84,7 +84,7 @@ const updateProduct = asyncHandler(async (req, res) => {
     req.body
 
   const product = await Product.findById(req.params.id)
-
+  console.log(product)
   if (product) {
     product.name = name
     product.price = price
@@ -94,6 +94,7 @@ const updateProduct = asyncHandler(async (req, res) => {
     product.category = category
     product.countInStock = countInStock
     product.warrantyPeriod = warrantyPeriod
+    product.tokenURI = "new product Id"
 
     const updatedProduct = await product.save()
     res.json(updatedProduct)
@@ -107,10 +108,12 @@ const updateProduct = asyncHandler(async (req, res) => {
 //@route POST /api/products/updatetokenId/:id
 //@access Private/Admin
 const updateProductTokenId = asyncHandler(async (req,res) => {
-  const {tokenId} = req.body
+  console.log("req body",req.body)
+  const {tokenURI} = req.body
   const product = await Product.findById(req.params.id)
+  console.log(product)
   if(product){
-    product.tokenId = tokenId
+    product.tokenURI = tokenURI
     const updatedProduct = await product.save()
     res.json(updatedProduct)
   }else {
@@ -177,4 +180,5 @@ export {
   updateProduct,
   createProductReview,
   getTopProducts,
+  updateProductTokenId
 }

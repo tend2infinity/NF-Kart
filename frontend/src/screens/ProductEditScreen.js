@@ -9,13 +9,16 @@ import FormContainer from "../components/FormContainer"
 import { listProductDetails, updateProduct, updateProductTokenId } from "../actions/productActions"
 import { PRODUCT_UPDATE_RESET } from "../constants/productConstants"
 import { create as ipfsHttpClient } from 'ipfs-http-client'
+import { token } from "morgan"
 const client = ipfsHttpClient('https://ipfs.infura.io:5001/api/v0')
 
 const ProductEditScreen = (props) => {
-  const { match, history,account,nft,marketplace } = props
+  const { match, history,account } = props
   const productId = match.params.id
-  console.log(nft);
-  console.log(marketplace)
+
+  const nft = useSelector(state => state.contractDetails.nft)
+  const marketplace = useSelector(state => state.contractDetails.marketplace)
+
 
   const [name, setName] = useState("")
   const [price, setPrice] = useState(0)
@@ -26,7 +29,7 @@ const ProductEditScreen = (props) => {
   const [description, setDescription] = useState("")
   const [uploading, setUploading] = useState(false)
   const [warrantyPeriod,setWarrantyPeriod] = useState(0)
-  const [tokenId, setTokenId] = useState("")
+  const [tokenURI, setTokenURI] = useState("")
 
   const uploadToIPFS = async (event) => {
     event.preventDefault()
@@ -47,7 +50,8 @@ const ProductEditScreen = (props) => {
   const createNFT = async () => {
     try{
       console.log(image)
-      mintThenList()
+      const uri = await mintThenList()
+      return uri;
     } catch(error) {
       console.log("create nft error: ", error)
     }
@@ -55,14 +59,21 @@ const ProductEditScreen = (props) => {
   const mintThenList = async () => {
     // mint nft 
     await(await nft.mint()).wait()
+    const itemCount = await marketplace.itemCount()
+    console.log("itemCount",itemCount);
     // get tokenId of new nft 
     const id = await nft.tokenCount()
-    setTokenId(id)
+    const result = await client.add(JSON.stringify({id}));
+    const uri = `https://ipfs.infura.io/ipfs/${result.path}`
+    console.log("uri",uri);
+    setTokenURI(uri)
     console.log("TokenId",id)
     // approve marketplace to spend nft
     await(await nft.setApprovalForAll(marketplace.address, true)).wait()
     // add nft to marketplace
     await(await marketplace.makeItem(nft.address, id, warrantyPeriod)).wait()
+    // dispatch(updateProductTokenId(id))
+    return uri;
   }
 
   const dispatch = useDispatch()
@@ -78,6 +89,7 @@ const ProductEditScreen = (props) => {
   } = productUpdate
 
   useEffect(() => {
+
     if (successUpdate) {
       dispatch({ type: PRODUCT_UPDATE_RESET })
       history.push("/admin/productlist")
@@ -93,7 +105,7 @@ const ProductEditScreen = (props) => {
         setCountInStock(product.countInStock)
         setDescription(product.description)
         setWarrantyPeriod(product.warrantyPeriod)
-        setTokenId(product.tokenId)
+        setTokenURI(product.tokenURI)
       }
     }
   }, [dispatch, history, productId, product, successUpdate])
@@ -121,33 +133,39 @@ const ProductEditScreen = (props) => {
   //   }
   // }
 
-  const submitHandler = (e) => {
+  const submitHandler = async (e) => {
+
     e.preventDefault()
     console.log(image)
-    warrantyPeriod>0 ? 
-    createNFT() &&
-    dispatch(
-      updateProduct({
-        _id: productId,
-        name,
-        price,
-        image,
-        brand,
-        category,
-        description,
-        countInStock,
-        warrantyPeriod,
-      }),
-      updateProductTokenId({
-        _id:productId,
-        tokenId: tokenId
-      })
-    ) :
-    console.log("Add a warranty period to create an NFT");
+    if(warrantyPeriod>0) {
+      const uri = await createNFT() 
+      dispatch(
+         updateProduct({
+           _id: productId,
+           name,
+           price,
+           image,
+           brand,
+           category,
+           description,
+           countInStock,
+           warrantyPeriod,
+           tokenURI,
+         }) )
+         dispatch(     
+        updateProductTokenId({
+          _id:productId,
+          tokenURI: uri
+        }))
+    } 
+    else{
+      console.log("Add a warranty period to create an NFT");
+    }
   }
 
   return (
     <>
+    
       <Link to='/admin/productlist' className='btn btn-light my-3'>
         Go Back
       </Link>

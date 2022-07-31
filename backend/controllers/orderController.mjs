@@ -40,7 +40,7 @@ const addOrderItems = asyncHandler(async (req, res) => {
 const getOrderById = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id).populate(
     "user",
-    "name email"
+    "orderItems",
   )
   if (order) {
     res.json(order)
@@ -64,7 +64,7 @@ const updateOrderToPaid = asyncHandler(async (req, res) => {
       update_time: req.body.update_time,
       email_address: req.body.payer.email_address,
     }
-    const updatedOrder = await Order.save()
+    const updatedOrder = await order.save()
     res.json(updatedOrder)
   } else {
     res.status(404)

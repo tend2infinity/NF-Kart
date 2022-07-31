@@ -9,8 +9,9 @@ import { login } from "../actions/userActions"
 import { setContracts } from "../actions/contractActions"
 
 const LoginScreen = (props) => {
-  const { location, history,web3Handler,account,nft, marketplace } = props
-
+  const { location, history,web3Handler,account} = props
+  const nft = useSelector((state) => state.contractDetails.nft)
+  const marketplace = useSelector((state) => state.contractDetails.marketplace)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
 
@@ -27,11 +28,27 @@ const LoginScreen = (props) => {
   }, [history, userInfo, redirect, nft])
 
   const submitHandler = (e) => {
+    loadMarketplaceSoldItemCount()
     e.preventDefault()
     dispatch(login(email, password, account,nft,marketplace))
   }
+  const loadMarketplaceSoldItemCount = async()=> {
+    let count=0;
+    if(marketplace){
+      const newMarketplaceItemCount = await marketplace.itemCount()
+      for(let i=1; i<=newMarketplaceItemCount; i++){
+        const item = await marketplace.items(i);
+        if(item.sold){
+          count++;
+        }
+      }
+      console.log(count);
+    }
+
+  }
 
   const EthWallet = () =>{
+    
     web3Handler()}
 
   return (

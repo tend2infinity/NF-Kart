@@ -27,7 +27,7 @@ const productSchema = mongoose.Schema(
       type: String,
       required: true,
     },
-    tokenId: {
+    tokenURI: {
       type: String,
       required: true,
     },

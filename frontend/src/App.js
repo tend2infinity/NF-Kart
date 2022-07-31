@@ -65,14 +65,24 @@ const App = () => {
     dispatch(setContracts(contract))
     console.log("fn completed")
   }
-  
+  // useEffect=(()=>{
+  //   loadMarketplaceItemCount()
+  // },[])
+
   useEffect(()=>{
-    if(nft==={} && userInfo){web3Handler() }
+    if(nft==={} && userInfo){
+      web3Handler()
+     }
   },[nft])
+
   useEffect(()=>{
-    if(userInfo){web3Handler() }
+    if(userInfo){
+      web3Handler()
+    }
     else dispatch(removeContracts())
   },[userInfo])
+
+
 
   return (
           <BrowserRouter>
@@ -83,14 +93,13 @@ const App = () => {
         <Container>
               
   
-            <Route path='/order/:id'  >
-            <OrderScreen/>
-            </Route>
+            <Route path='/order/:id'
+            render={(props) => <OrderScreen {...props} web3Handler={web3Handler} account={account} />} />
            
             <Route path='/shipping' component={ShippingScreen} />
             <Route path='/payment' component={PaymentScreen} />
             <Route path='/placeorder' component={PlaceOrderScreen} />
-            <Route path='/login' render={(props) => <LoginScreen {...props} web3Handler={web3Handler} account={account} />}/>
+            <Route path='/login' render={(props) => <LoginScreen {...props} web3Handler={web3Handler} account={account} nft={nft} marketplace={marketplace} />}/>
             <Route path='/register' component={RegisterScreen} />
             <Route path='/profile' component={ProfileScreen} />
             <Route path='/product/:id' component={ProductScreen} />

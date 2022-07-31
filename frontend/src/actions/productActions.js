@@ -147,6 +147,7 @@ export const createProduct = () => async (dispatch, getState) => {
 }
 
 export const updateProduct = (product) => async (dispatch, getState) => {
+  console.log(product)
   try {
     dispatch({
       type: PRODUCT_UPDATE_REQUEST,
@@ -190,6 +191,7 @@ export const updateProduct = (product) => async (dispatch, getState) => {
 }
 
 export const updateProductTokenId = (product) => async (dispatch, getState) => {
+  console.log(product)
   try {
     dispatch({
       type: PRODUCT_UPDATE_TOKEN_REQUEST,
@@ -206,12 +208,11 @@ export const updateProductTokenId = (product) => async (dispatch, getState) => {
       },
     }
 
-    const { data } = await axios.put(
-      `/api/products/${product._id}`,
-      product.tokenId,
+    const { data } = await axios.post(
+      `/api/products/updatetokenId/${product._id}`,
+      {tokenURI : product.tokenURI},
       config
     )
-
     dispatch({
       type: PRODUCT_UPDATE_TOKEN_SUCCESS,
       payload: data,
