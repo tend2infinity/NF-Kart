@@ -25,6 +25,7 @@ const OrderScreen = ({ match, history }) => {
   const [sdkReady, setSdkReady] = useState(false)
   const [productIdArray, setProductIdArray] = useState([])
   const [nftDetails, setNftDetails] = useState([])
+  const [nftEmailButton, setNftEmailButton] = useState(false);
   const dispatch = useDispatch()
 
   const orderDetails = useSelector((state) => state.orderDetails)
@@ -113,6 +114,7 @@ const OrderScreen = ({ match, history }) => {
 
     console.log(nftData)
     setNftDetails(nftData)
+    setNftEmailButton(true)
     console.log("get nft works")
   }
 
@@ -142,8 +144,6 @@ const OrderScreen = ({ match, history }) => {
     })
     setProductIdArray(productTokenIds)
 
-    getNftData()
-
     const addPayPalScript = async () => {
       const { data: clientId } = await axios.get("/api/config/paypal")
       const script = document.createElement("script")
@@ -168,131 +168,162 @@ const OrderScreen = ({ match, history }) => {
     }
   }, [dispatch, orderId, successPay, successDeliver, order, userInfo, history])
 
-  const transferNFT = async () => {
-    const itemCount = await marketplace.itemCount()
-    let itemTokenURI = []
-    cartItems.map(async (item) => {
-      const uri = item.tokenURI
-      let response = await fetch(uri)
-      let json = await response.json()
-      itemTokenURI.push(json)
-    })
-    let matchItemId = null
-
-    console.log("prev item count", itemCount)
-    const dateInSecs = Math.floor(new Date().getTime() / 1000)
-    for (let i = 1; i <= itemCount; i++) {
-      const item = await marketplace.items(i)
-      console.log("tokenId", item.tokenId)
-      // eslint-disable-next-line no-loop-func
-      itemTokenURI.map(async (uri) => {
-        if (uri) {
-          console.log("uri", uri.id)
-          if (uri && uri.id && uri.id.hex === item.tokenId._hex) {
-            matchItemId = await marketplace.items(i).itemId
-            console.log("linear search complete, match found", uri.id)
-            await (
-              await marketplace.purchaseItem(item.itemId, dateInSecs)
-            ).wait()
-            setShowAlert(true)
-          }
-        }
-      })
-    }
-    if (matchItemId) {
-      const itemSoldStatus = await marketplace.items(matchItemId)
-      console.log("item turned to sold", itemSoldStatus.sold)
-    }
-  }
-
-  const successPaymentHandler = (paymentResult) => {
-    console.log(paymentResult)
+  useEffect(() => {
     transferNFT()
-    if (nftDetails.length > 0) {
-      dispatch(
-        payOrder(
-          orderId,
-          userInfo.email,
-          order.orderItems[0].product,
-          nftDetails.tokenId,
-          paymentResult
-        )
-      )
+  }, [order, marketplace, nft])
+
+  const transferNFT = async () => {
+    if (!showAlert) {
+      console.log(" works!")
+      if (marketplace && order && order.isPaid) {
+        const itemCount = await marketplace.itemCount()
+        let itemTokenURI = []
+        cartItems.map(async (item) => {
+          const uri = item.tokenURI
+          let response = await fetch(uri)
+          let json = await response.json()
+          itemTokenURI.push(json)
+        })
+        let matchItemId = null
+
+        console.log("prev item count", itemCount)
+        const dateInSecs = Math.floor(new Date().getTime() / 1000)
+        for (let i = 1; i <= itemCount; i++) {
+          const item = await marketplace.items(i)
+          console.log("tokenId", item.tokenId)
+          // eslint-disable-next-line no-loop-func
+          itemTokenURI.map(async (uri) => {
+            if (uri) {
+              console.log("uri", uri.id)
+              if (uri && uri.id && uri.id.hex === item.tokenId._hex) {
+                matchItemId = await marketplace.items(i).itemId
+                console.log("linear search complete, match found", uri.id)
+                await (
+                  await marketplace.purchaseItem(item.itemId, dateInSecs)
+                ).wait()
+                setShowAlert(true)
+              }
+            }
+          })
+        }
+        if (matchItemId) {
+          const itemSoldStatus = await marketplace.items(matchItemId)
+          console.log("item turned to sold", itemSoldStatus.sold)
+        }
+      }
+
     }
+
   }
+  const emailNFTDetails = async (dbID,tokenId,name,email,owner) => {
+    console.log("emailNFTDetails",dbID,tokenId.toString(),name,email,owner)
+    const config = {
+      headers: {
+        "content-type": "application/json",
+        Authorization: `Bearer ${userInfo.token}`,
+      },
+    }
+    console.log(tokenId)
+    let obj={}
+    obj.productID = dbID
+    obj.tokenID = tokenId.toString()
+    obj.name = name
+    obj.email = email 
+    obj.owner = owner
+    try {
+      const { data } = await axios.post(`/api/orders/myorders/getemail`,obj,config)
+      console.log(data)
+      
+    } catch (error) {
+      console.log(error)
+    }
+}
 
-  const deliverHandler = () => {
-    dispatch(deliverOrder(order))
-  }
+const successPaymentHandler = async (paymentResult) => {
+  console.log(paymentResult)
 
-  return loading ? (
-    <Loader />
-  ) : error ? (
-    <Message variant='danger'>{error}</Message>
-  ) : (
-    <>
-      <Alert
-        show={showAlert}
-        onClose={() => setShowAlert(false)}
-        dismissible
-        variant='success'
-      >
-        <h5> Nft Issued Successfully! </h5>
-      </Alert>
-      <h1>Order {order._id}</h1>
-      <Row>
-        <Col md={8}>
-          <ListGroup variant='flush'>
-            <ListGroup.Item>
-              <h2>Shipping</h2>
-              <p>
-                <strong>Name: </strong> {order.user.name}
-              </p>
-              <p>
-                <strong>Email: </strong>{" "}
-                <a href={`mailto:${order.user.email}`}>{order.user.email}</a>
-              </p>
-              <p>
-                <strong>Address:</strong>
-                {order.shippingAddress.address}, {order.shippingAddress.city}{" "}
-                {order.shippingAddress.postalCode},{" "}
-                {order.shippingAddress.country}
-              </p>
-              {order.isDelivered ? (
-                <Message variant='success'>
-                  Delivered on {order.deliveredAt}
-                </Message>
-              ) : (
-                <Message variant='danger'>Not Delivered</Message>
-              )}
-            </ListGroup.Item>
+  dispatch(
+    payOrder(
+      orderId,
+      paymentResult
+    )
+  )
+  await transferNFT()
+}
 
-            <ListGroup.Item>
-              <h2>Payment Method</h2>
-              <p>
-                <strong>Method: </strong>
-                {order.paymentMethod}
-              </p>
-              {order.isPaid ? (
-                <Message variant='success'>Paid on {order.paidAt}</Message>
-              ) : (
-                <Message variant='danger'>Not Paid</Message>
-              )}
-            </ListGroup.Item>
+const deliverHandler = () => {
+  dispatch(deliverOrder(order))
+}
 
-            <ListGroup.Item>
-              <h2>Order Items</h2>
-              {order.orderItems.length === 0 ? (
-                <Message>Order is empty</Message>
-              ) : (
-                <div>
-                  <ListGroup variant='flush'>
-                    {order.orderItems.map((item, index) => {
-                      return (
-                        nftDetails.length > 0 &&
-                        nftDetails.map((nft) => {
-                          return (
-                            nft.dbID === item.product && (
+return loading ? (
+  <Loader />
+) : error ? (
+  <Message variant='danger'>{error}</Message>
+) : (
+  <>
+    <Alert
+      show={showAlert}
+      onClose={() => setShowAlert(false)}
+      dismissible
+      variant='success'
+    >
+      <h5> Nft Issued Successfully! </h5>
+    </Alert>
+    <h1>Order {order._id}</h1>
+    <Row>
+      <Col md={8}>
+        <ListGroup variant='flush'>
+          <ListGroup.Item>
+            <h2>Shipping</h2>
+            <p>
+              <strong>Name: </strong> {order.user.name}
+            </p>
+            <p>
+              <strong>Email: </strong>{" "}
+              <a href={`mailto:${order.user.email}`}>{order.user.email}</a>
+            </p>
+            <p>
+              <strong>Address:</strong>
+              {order.shippingAddress.address}, {order.shippingAddress.city}{" "}
+              {order.shippingAddress.postalCode},{" "}
+              {order.shippingAddress.country}
+            </p>
+            {order.isDelivered ? (
+              <Message variant='success'>
+                Delivered on {order.deliveredAt}
+              </Message>
+            ) : (
+              <Message variant='danger'>Not Delivered</Message>
+            )}
+          </ListGroup.Item>
+
+          <ListGroup.Item>
+            <h2>Payment Method</h2>
+            <p>
+              <strong>Method: </strong>
+              {order.paymentMethod}
+            </p>
+            {order.isPaid ? (
+              <Message variant='success'>Paid on {order.paidAt}</Message>
+            ) : (
+              <Message variant='danger'>Not Paid</Message>
+            )}
+          </ListGroup.Item>
+
+          <ListGroup.Item>
+            <h2>Order Items</h2>
+            {order.orderItems.length === 0 ? (
+              <Message>Order is empty</Message>
+            ) : (
+              <div>
+                <ListGroup variant='flush'>
+                  {order.orderItems.map((item, index) => {
+                    return (
+                      nftDetails.length > 0 &&
+                      nftDetails.map((nft) => {
+                        return (
+                          nft.dbID === item.product && (
+                            <div>
                               <ListGroup.Item key={index}>
                                 <Row>
                                   <Col md={2}>
@@ -337,89 +368,94 @@ const OrderScreen = ({ match, history }) => {
                                   </Col>
                                 </Row>
                               </ListGroup.Item>
-                            )
+                              <Button onClick={()=> emailNFTDetails(nft.dbID,nft.tokenId,userInfo.name,userInfo.email, nft.owner)} disabled={!nftEmailButton}>
+                                Email NFT Details
+                              </Button>
+                            </div>
                           )
-                        })
-                      )
-                    })}
-                  </ListGroup>
-                  <Button onClick={getNftData} disabled={nftDetails.length > 0}>
-                    Get NFT Data
-                  </Button>
-                </div>
-              )}
+                        )
+                      })
+                    )
+                  })}
+                </ListGroup>
+                <Button onClick={getNftData} disabled={nftDetails.length > 0}>
+                  Get NFT Data
+                </Button>
+
+              </div>
+            )}
+          </ListGroup.Item>
+        </ListGroup>
+      </Col>
+      <Col md={4}>
+        <Card>
+          <ListGroup variant='flush'>
+            <ListGroup.Item>
+              <h2>Order Summary</h2>
             </ListGroup.Item>
-          </ListGroup>
-        </Col>
-        <Col md={4}>
-          <Card>
-            <ListGroup variant='flush'>
+            <ListGroup.Item>
+              <Row>
+                <Col>Items</Col>
+                <Col>${order.itemsPrice}</Col>
+              </Row>
+            </ListGroup.Item>
+            <ListGroup.Item>
+              <Row>
+                <Col>Shipping</Col>
+                <Col>${order.shippingPrice}</Col>
+              </Row>
+            </ListGroup.Item>
+            <ListGroup.Item>
+              <Row>
+                <Col>Tax</Col>
+                <Col>${order.taxPrice}</Col>
+              </Row>
+            </ListGroup.Item>
+            <ListGroup.Item>
+              <Row>
+                <Col>Total</Col>
+                <Col>${order.totalPrice}</Col>
+              </Row>
+            </ListGroup.Item>
+            {!order.isPaid && (
               <ListGroup.Item>
-                <h2>Order Summary</h2>
+                {loadingPay && <Loader />}
+                {!sdkReady ? (
+                  <Loader />
+                ) : (
+                  <PayPalButton
+                    amount={order.totalPrice}
+                    onSuccess={successPaymentHandler}
+                  />
+                )}
               </ListGroup.Item>
-              <ListGroup.Item>
-                <Row>
-                  <Col>Items</Col>
-                  <Col>${order.itemsPrice}</Col>
-                </Row>
-              </ListGroup.Item>
-              <ListGroup.Item>
-                <Row>
-                  <Col>Shipping</Col>
-                  <Col>${order.shippingPrice}</Col>
-                </Row>
-              </ListGroup.Item>
-              <ListGroup.Item>
-                <Row>
-                  <Col>Tax</Col>
-                  <Col>${order.taxPrice}</Col>
-                </Row>
-              </ListGroup.Item>
-              <ListGroup.Item>
-                <Row>
-                  <Col>Total</Col>
-                  <Col>${order.totalPrice}</Col>
-                </Row>
-              </ListGroup.Item>
-              {!order.isPaid && (
+            )}
+            {loadingDeliver && <Loader />}
+            {userInfo &&
+              userInfo.isAdmin &&
+              order.isPaid &&
+              !order.isDelivered && (
                 <ListGroup.Item>
-                  {loadingPay && <Loader />}
-                  {!sdkReady ? (
-                    <Loader />
-                  ) : (
-                    <PayPalButton
-                      amount={order.totalPrice}
-                      onSuccess={successPaymentHandler}
-                    />
-                  )}
+                  <Button
+                    type='button'
+                    className='btn btn-block'
+                    onClick={deliverHandler}
+                  >
+                    Mark As Delivered
+                  </Button>
                 </ListGroup.Item>
               )}
-              {loadingDeliver && <Loader />}
-              {userInfo &&
-                userInfo.isAdmin &&
-                order.isPaid &&
-                !order.isDelivered && (
-                  <ListGroup.Item>
-                    <Button
-                      type='button'
-                      className='btn btn-block'
-                      onClick={deliverHandler}
-                    >
-                      Mark As Delivered
-                    </Button>
-                  </ListGroup.Item>
-                )}
-            </ListGroup>
-            <ListGroup>
-              <ListGroup.Item>
-                {errorPay && <Message variant='danger'>{errorPay}</Message>}
-              </ListGroup.Item>
-            </ListGroup>
-          </Card>
-        </Col>
-      </Row>
-    </>
-  )
+          </ListGroup>
+          <ListGroup>
+            <ListGroup.Item>
+              {errorPay && <Message variant='danger'>{errorPay}</Message>}
+            </ListGroup.Item>
+          </ListGroup>
+        </Card>
+      </Col>
+    </Row>
+  </>
+)
 }
 
 export default OrderScreen

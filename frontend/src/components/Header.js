@@ -20,7 +20,7 @@ const Header = (props) => {
     <header>
       <Navbar bg='dark' variant='dark' expand='lg' collapseOnSelect>
         <Container>
-          <Navbar.Brand href='/'>ProShop</Navbar.Brand>
+          <Navbar.Brand href='/'>NF-Kart</Navbar.Brand>
           <Navbar.Toggle aria-controls='basic-navbar-nav' />
           <Navbar.Collapse id='basic-navbar-nav'>
             <Route render={({ history }) => <SearchBox history={history} />} />

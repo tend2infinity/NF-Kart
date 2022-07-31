@@ -1,11 +1,11 @@
 import { createTransport } from "nodemailer"
 
-const sendMail = (email, productid, tokenid) => {
+const sendMail = (email, name,productid, tokenid,owner) => {
   const transporter = createTransport({
     service: "gmail",
     auth: {
-      user: "forpictconfessions@gmail.com",
-      pass: "krrqtecqxqoshttc",
+      user: process.env.EMAIL,
+      pass: process.env.PASSWORD,
     },
   })
 
@@ -13,9 +13,12 @@ const sendMail = (email, productid, tokenid) => {
     from: "Pro Shop",
     to: `${email}`,
     subject: `Warranty Card for the purchase of product:${productid}`,
-    text: `Thank you for buying from us.
+    text: `Hello ${name}
+    Thank you for buying from us.
     Product: ${productid}
-    NFT token: ${tokenid}`,
+    NFT token: ${tokenid}
+    NFT owner account: ${owner}`,
+    
   }
 
   transporter.sendMail(options, function (err, info) {

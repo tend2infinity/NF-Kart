@@ -67,7 +67,6 @@ const updateOrderToPaid = asyncHandler(async (req, res) => {
       email_address: req.body.payer.email_address,
     }
     const updatedOrder = await order.save()
-    sendMail("klakshya170@gmail.com", "1234", "abcd")
     res.json(updatedOrder)
   } else {
     res.status(404)
@@ -104,6 +103,17 @@ const updateOrderToDelivered = asyncHandler(async (req, res) => {
     throw new Error("Order Not Found")
   }
 })
+
+//@desc   Get email for warranty card
+//@route GET /api/myorders/getemail
+//@access Private
+const getEmail = asyncHandler(async (req, res) => {
+  console.log(req.body)
+  const {productID,tokenID,name,email,owner} = req.body
+  
+  sendMail(email,name,productID,tokenID,owner)
+  res.send("Email sent to",email)
+})
 export {
   addOrderItems,
   getOrderById,
@@ -111,4 +121,5 @@ export {
   getMyOrders,
   getOrders,
   updateOrderToDelivered,
+  getEmail
 }

@@ -10,7 +10,7 @@ const Meta = (title, description, keywords) => {
   )
 }
 Meta.defaultProps = {
-  title: "Welcome to Proshop",
+  title: "Welcome to NF-Kart",
   description: "We sell the best products",
   keywords: "electronics, buy electronics,best electronics",
 }
