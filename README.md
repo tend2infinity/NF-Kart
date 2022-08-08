@@ -1,5 +1,5 @@
 # NF-Kart
-A web application hosting a full-fledged NFT based marketplace.
+A real world online NFT(Non Fungible Token) based warranty system.
 
 - Each product in the marketplace is linked to an NFT owned by the marketplace minted on Polygon Blockchain.
 Upon purchase of product the ownership of the NFT is transferred to the User.
